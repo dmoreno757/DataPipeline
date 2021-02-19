@@ -5,19 +5,22 @@ from airflow.utils.decorators import apply_defaults
 class LoadFactOperator(BaseOperator):
 
     ui_color = '#F98866'
+    
+    sqlQuery = "INSERT INTO {} {};"
 
     @apply_defaults
     def __init__(self,
                  # Define your operators params (with defaults) here
                  # Example:
                  # conn_id = your-connection-name
-                 redshift_conn_id="",
+                 redshift_conn_id = "redshift_conn_id",
                  table = "",
-                 aws_credentials_id = "",
-                 s3_bucket = "",
-                 s3_key = "",
+                 aws_credentials_id = "aws_credentials",
+                 s3_bucket = "s3_bucket",
+                 s3_key = "s3_key",
                  log_json_file = "",
                  sqlWrite = "",
+                 truncate = False,
                  *args, **kwargs):
 
         super(LoadFactOperator, self).__init__(*args, **kwargs)
@@ -31,10 +34,21 @@ class LoadFactOperator(BaseOperator):
         self.s3_key = s3_key
         self.log_json_file = log_json_file
         self.sqlWrite = sqlWrite
+        self.truncate = truncate
 
     def execute(self, context):
         self.log.info('LoadFactOperator not implemented yet')
         
         redshiftHook = PostgresHook(postgres_conn_id = self.redshift_conn_id)
-        redshiftHook.run(self.sqlWrite)
+        
+        #if self.truncate:
+        #    redshiftHook.run(LoadFactOperator.f"TRUNCATE {self.table}")
+            
+        #redshiftHook.run("INSERT INTO {table} {sqlWrite};")
+        #redshift.run(f"INSERT INTO {self.table} {self.query}")
+        #redshiftHook.run(LoadFactOperator.f"INSERT INTO {self.table} {self.sqlWrite}")
+        
+        
+        sqlFact = LoadFactOperator.sqlQuery.format(self.table, self.sqlWrite)
+        redshiftHook.run(sqlFact)
         

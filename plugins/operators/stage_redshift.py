@@ -17,11 +17,11 @@ class StageToRedshiftOperator(BaseOperator):
                  # Define your operators params (with defaults) here
                  # Example:
                  # redshift_conn_id=your-connection-name
-                 redshift_conn_id="",
+                 redshift_conn_id = "redshift_conn_id",
                  table = "",
-                 aws_credentials_id = "",
-                 s3_bucket = "",
-                 s3_key = "",
+                 aws_credentials_id = "aws_credentials",
+                 s3_bucket = "s3_bucket",
+                 s3_key = "s3_key",
                  log_json_file = "",
                  *args, **kwargs):
 
@@ -42,18 +42,23 @@ class StageToRedshiftOperator(BaseOperator):
         aws_hook = AwsHook(self.aws_credentials_id)
         credentials = aws_hook.get_credentials()
         
-        self.log.info = ("Insert daat into s3")
+        #self.log.info = ("Insert daat into s3")
         
         
-        #self.log.info("s3://{}/{}".format(str(self.s3_bucket), str(self.s3_key)))
         
+        self.s3_key = self.s3_key.format(**context)
         dataPath = "s3://{}/{}".format(self.s3_bucket, self.s3_key)
         
-        formatSQL = StageToRedshiftOperator.sqlWrite.format(self.table, dataPath, credentials.access_key, credentials.secret_key, self.log_json_file)
-        
         redshiftHook = PostgresHook(postgres_conn_id = self.redshift_conn_id)
-        redshiftHook.run(formatSQL)
-        self.log.info = ("Finish insert with stage_redshift")
+      
+        sqlRun = StageToRedshiftOperator.sqlWrite.format(self.table, dataPath, credentials.access_key, credentials.secret_key, self.log_json_file)
+        redshiftHook.run(sqlRun)
+       
+        
+
+        #redshiftHook = PostgresHook(postgres_conn_id = self.redshift_conn_id)
+        #redshiftHook.run(formatSQL)
+        #self.log.info = ("Finish insert with stage_redshift")
 
 
 

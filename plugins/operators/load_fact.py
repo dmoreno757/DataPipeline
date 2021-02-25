@@ -37,18 +37,28 @@ class LoadFactOperator(BaseOperator):
         self.truncate = truncate
 
     def execute(self, context):
-        self.log.info('LoadFactOperator not implemented yet')
         
+        '''
+        Description:
+        This functions process the information to their tables
+
+        Arguments:
+        self: Instance of the class
+        context: Can have different values
+    
+        Returns:
+        None
+        '''
+        
+        self.log.info = ('LoadFactOperator start')
+        
+        self.log.info = ('hook to process')
         redshiftHook = PostgresHook(postgres_conn_id = self.redshift_conn_id)
         
-        #if self.truncate:
-        #    redshiftHook.run(LoadFactOperator.f"TRUNCATE {self.table}")
-            
-        #redshiftHook.run("INSERT INTO {table} {sqlWrite};")
-        #redshift.run(f"INSERT INTO {self.table} {self.query}")
-        #redshiftHook.run(LoadFactOperator.f"INSERT INTO {self.table} {self.sqlWrite}")
-        
-        
+        self.log.info = ('Start of loadfactoperator')
         sqlFact = LoadFactOperator.sqlQuery.format(self.table, self.sqlWrite)
         redshiftHook.run(sqlFact)
+        
+        self.log.info = ('end of loadfactoperator')
+
         

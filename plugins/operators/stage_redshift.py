@@ -38,27 +38,36 @@ class StageToRedshiftOperator(BaseOperator):
         
 
     def execute(self, context):
-        self.log.info = ('StageToRedshiftOperator not implemented yet')
+        '''
+        Description:
+        This functions process the information from s3 and stages it into reshift
+
+        Arguments:
+        self: Instance of the class
+        context: Can have different values
+    
+        Returns:
+        None
+        '''
+        
+        self.log.info = ('Implement configuration')
         aws_hook = AwsHook(self.aws_credentials_id)
         credentials = aws_hook.get_credentials()
         
-        #self.log.info = ("Insert daat into s3")
-        
-        
-        
+        self.log.info = ('Gather s3 information')
+
         self.s3_key = self.s3_key.format(**context)
         dataPath = "s3://{}/{}".format(self.s3_bucket, self.s3_key)
         
+        self.log.info = ('Set up the hook')
         redshiftHook = PostgresHook(postgres_conn_id = self.redshift_conn_id)
       
+        self.log.info = ('start of the redhsift operator')
         sqlRun = StageToRedshiftOperator.sqlWrite.format(self.table, dataPath, credentials.access_key, credentials.secret_key, self.log_json_file)
         redshiftHook.run(sqlRun)
-       
         
-
-        #redshiftHook = PostgresHook(postgres_conn_id = self.redshift_conn_id)
-        #redshiftHook.run(formatSQL)
-        #self.log.info = ("Finish insert with stage_redshift")
+        self.log.info = ("End of redhsift operator")
+        
 
 
 

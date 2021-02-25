@@ -3,6 +3,8 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
 class DataQualityOperator(BaseOperator):
+    
+    sqlSelect = """SELECT COUNT(*) FROM {};"""
 
     ui_color = '#89DA59'
 
@@ -17,7 +19,7 @@ class DataQualityOperator(BaseOperator):
                  s3_bucket = "s3_bucket",
                  s3_key = "s3_key",
                  log_json_file = "",
-                 sqlWrite = "",
+                 dq_checks = "",
                  truncate = False,
                  *args, **kwargs):
 
@@ -30,15 +32,37 @@ class DataQualityOperator(BaseOperator):
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
         self.log_json_file = log_json_file
-        self.sqlWrite = sqlWrite
+        self.dq_checks = dq_checks
         self.truncate = truncate
+        self.redshift_conn_id = redshift_conn_id
 
     def execute(self, context):
-        self.log.info('DataQualityOperator not implemented yet')
         
-        aws_hook = AwsHook(self.aws_credentials_id)
-        credentials = aws_hook.get_credentials()
+        '''
+        Description:
+        This functions does a quality check of the count of a table
+
+        Arguments:
+        self: Instance of the class
+        context: Can have different values
+    
+        Returns:
+        None
+        '''
         
-        for x in self.table:
-            obj = aws_hook.get_records(f"SELECT COUNT(*) FROM {x}")
+        self.log.info = ('DataQualityOperator startup')
         
+        self.log.info = ('Set up the hook')
+        redshiftHook = PostgresHook(postgres_conn_id = self.redshift_conn_id)
+        
+        self.log.info = ("Go through the tables to grab a count")
+        for x in self.dq_checks:
+            sql = x.get('check_sql')
+            output = redshiftHook.get_records(sql)[0]
+        
+        self.log.info = ('Condition to see if the data is correct')
+        self.log.info = (output)
+        if len(output) < 1:
+            raise ValueError (f"data check failed for {sql}")
+        
+        self.log.info = ("Complete")

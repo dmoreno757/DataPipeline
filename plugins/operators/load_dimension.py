@@ -6,9 +6,13 @@ from airflow.contrib.hooks.aws_hook import AwsHook
 
 class LoadDimensionOperator(BaseOperator):
     
-    sqlInsert = """INSERT INTO SELECT {} {};"""
+    sqlInsert = """
+         INSERT INTO {} {};
+    """
     
-    sqlTrunc = """DELETE FROM {};"""
+    sqlTrunc = """
+        TRUNCATE TABLE {};
+    """
     
     
 
@@ -45,20 +49,32 @@ class LoadDimensionOperator(BaseOperator):
   
 
     def execute(self, context):
-        self.log.info('LoadDimensionOperator not implemented yet')
         
-        redshiftHook = PostgresHook(postgres_conn_id = self.redshift_conn_id)
-        credentials = aws_hook.get_credentials()
+        '''
+        Description:
+        This functions process the the dimension tables. The target table is emptied first before it needs to be inserted.
 
+        Arguments:
+        self: Instance of the class
+        context: Can have different values
+    
+        Returns:
+        None
+        '''
+        self.log.info = ('LoadDimensionOperator startup')
         
+        self.log.info = ('Set up the hook to be used')
+        redshiftHook = PostgresHook(postgres_conn_id = self.redshift_conn_id)
+
+        self.log.info = ('Truncate the table')
         if self.truncate:
-            
             sqlTruncRun = LoadDimensionOperator.sqlTrunc.format(self.table)
             redshiftHook.run(sqlTruncRun)
         
-        
-        sqlRun = LoadDimensionOperator.sqlInsert.format(self.table, self.sqlWrite, credentials.access_key, credentials.secret_key, self.log_json_file)
+        self.log.info = ('Start of LoadDimension ')
+        sqlRun = LoadDimensionOperator.sqlInsert.format(self.table, self.sqlWrite)
         redshiftHook.run(sqlRun)
         
-            
-        #redshiftHook.run(LoadDimensionOperator.f"INSERT INTO {self.table} {self.sqlWrite}")
+        self.log.info = ('End of LoadDimension ')
+
+  

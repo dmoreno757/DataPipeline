@@ -12,6 +12,8 @@ from helpers import SqlQueries
 # AWS_KEY = os.environ.get('AWS_KEY')
 # AWS_SECRET = os.environ.get('AWS_SECRET')
 
+dq_checks=[{'check_sql': "SELECT COUNT(*) FROM users WHERE userid is null", 'expected_result': 0,
+            'check_sql': "SELECT COUNT(*) FROM songs WHERE songid is null", 'expected_result': 0}]
 
 
 
@@ -28,12 +30,12 @@ dag = DAG('udac_example_dag',
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
 
-task_create_tables = PostgresOperator(
-    task_id = 'create_tables',
-    dag = dag,
-    sql = 'create_tables.sql',
-    postgres_conn_id = 'redshift_conn_id'
-)
+#task_create_tables = PostgresOperator(
+#    task_id = 'create_tables',
+#    dag = dag,
+#    sql = 'create_tables.sql',
+#    postgres_conn_id = 'redshift_conn_id'
+#)
 
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_Events',
@@ -53,7 +55,7 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     redshift_conn_id = 'redshift_conn_id',
     aws_credentials_id = 'aws_credentials',
     s3_bucket = 'udacity-dend',
-    s3_key = 'song_data',
+    s3_key = 'song_data/A/A/A',
     region = 'us_west_2'
 )
 
@@ -97,7 +99,7 @@ load_artist_dimension_table = LoadDimensionOperator(
 load_time_dimension_table = LoadDimensionOperator(
     task_id='Load_time_dim_table',
     dag=dag,
-    destination_table = 'time',
+    table = 'time',
     redshift_conn_id = 'redshift_conn_id',
     aws_credentials_id = 'aws_credentials',
     sqlWrite = SqlQueries.time_table_insert
@@ -105,15 +107,24 @@ load_time_dimension_table = LoadDimensionOperator(
 
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
-    dag=dag
+    dag=dag,
+    redshift_conn_id = 'redshift_conn_id',
+    aws_credentials_id = 'aws_credentials',
+    table=["artists", "songplays", "songs", "staging_events", "staging_songs", "time", "users" ],
+    dq_checks = dq_checks
 )
+
+
 
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
-start_operator >> task_create_tables
+#start_operator >> task_create_tables
 
-task_create_tables >> stage_events_to_redshift
-task_create_tables >> stage_songs_to_redshift
+#task_create_tables >> stage_events_to_redshift
+#task_create_tables >> stage_songs_to_redshift
+
+start_operator >> stage_events_to_redshift
+start_operator >> stage_songs_to_redshift
 
 stage_events_to_redshift >> load_songplays_table
 
